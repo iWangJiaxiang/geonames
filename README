@@ -1,0 +1,157 @@
+# GeoNames 地理数据导入工具
+
+这是一个用Go语言编写的地理数据导入工具，用于将MaxMind GeoLite2城市位置数据从CSV格式导入到SQLite数据库中。
+
+## 功能特性
+
+- 📊 将GeoLite2-City-Locations-en.csv文件导入到SQLite数据库
+- 🗃️ 自动创建数据库表结构
+- ⚡ 批量导入优化，提高数据插入效率
+- 🔍 支持完整的地理信息查询，包括：
+  - 城市名称
+  - 国家信息
+  - 大洲信息
+  - 行政区划信息
+  - 时区信息
+  - 欧盟成员国标识
+
+## 项目结构
+
+```
+geonames/
+├── main.go                           # 主程序文件
+├── go.mod                           # Go模块依赖
+├── go.sum                           # 依赖校验文件
+├── Makefile                         # 构建脚本
+├── README                           # 项目说明文档
+├── geonames.db                      # 生成的SQLite数据库文件
+├── geonames                         # 编译后的可执行文件
+├── GeoLite2-City-Locations-en.csv   # 输入的地理数据文件
+└── .gitignore                       # Git忽略文件
+```
+
+## 数据模型
+
+工具使用`GeoNames`结构体来表示地理数据：
+
+```go
+type GeoNames struct {
+    GeoNameID           int    // 地理名称ID
+    LocaleCode          string // 语言代码
+    ContinentCode       string // 大洲代码
+    ContinentName       string // 大洲名称
+    CountryIsoCode      string // 国家ISO代码
+    CountryName         string // 国家名称
+    Subdivision1IsoCode string // 一级行政区ISO代码
+    Subdivision1Name    string // 一级行政区名称
+    Subdivision2IsoCode string // 二级行政区ISO代码
+    Subdivision2Name    string // 二级行政区名称
+    CityName            string // 城市名称
+    MetroCode           string // 都会区代码
+    TimeZone            string // 时区
+    IsInEuropeanUnion   string // 是否在欧盟内
+}
+```
+
+## 依赖项
+
+- **Go 1.22.6+** - 编程语言环境
+- **GORM v1.30.0** - ORM框架
+- **SQLite驱动 v1.6.0** - 数据库驱动
+
+## 安装和运行
+
+### 前置要求
+
+1. 确保已安装Go 1.22.6或更高版本
+2. 确保有GeoLite2-City-Locations-en.csv数据文件
+
+### 构建和运行
+
+使用Makefile进行构建和运行：
+
+```bash
+# 清理并构建项目
+make build
+
+# 运行程序
+make run
+
+# 或者一步完成构建和运行
+make all
+```
+
+### 手动构建
+
+```bash
+# 整理依赖
+go mod tidy
+
+# 构建可执行文件
+go build -o geonames main.go
+
+# 运行程序
+./geonames
+```
+
+## 使用说明
+
+1. **准备数据文件**：确保`GeoLite2-City-Locations-en.csv`文件存在于项目根目录
+2. **运行程序**：执行`make run`或直接运行`./geonames`
+3. **查看结果**：程序会在当前目录生成`geonames.db`SQLite数据库文件
+
+## CSV文件格式
+
+输入文件应包含以下列（按顺序）：
+1. geoname_id - 地理名称ID
+2. locale_code - 语言代码
+3. continent_code - 大洲代码
+4. continent_name - 大洲名称
+5. country_iso_code - 国家ISO代码
+6. country_name - 国家名称
+7. subdivision_1_iso_code - 一级行政区ISO代码
+8. subdivision_1_name - 一级行政区名称
+9. subdivision_2_iso_code - 二级行政区ISO代码
+10. subdivision_2_name - 二级行政区名称
+11. city_name - 城市名称
+12. metro_code - 都会区代码
+13. time_zone - 时区
+14. is_in_european_union - 是否在欧盟内
+
+## 数据库查询示例
+
+导入完成后，可以使用SQLite客户端查询数据：
+
+```sql
+-- 查询所有城市
+SELECT city_name, country_name FROM geonames WHERE city_name IS NOT NULL;
+
+-- 查询特定国家的城市
+SELECT city_name FROM geonames WHERE country_iso_code = 'CN';
+
+-- 查询欧盟国家的城市
+SELECT city_name, country_name FROM geonames WHERE is_in_european_union = '1';
+
+-- 查询特定时区的城市
+SELECT city_name, country_name FROM geonames WHERE time_zone = 'Asia/Shanghai';
+```
+
+## 性能优化
+
+- 使用GORM的批量插入功能（CreateBatchSize: 1000）
+- 静默日志模式减少I/O开销
+- 自动数据库迁移确保表结构正确
+
+## 许可证
+
+本项目使用MIT许可证。
+
+## 贡献
+
+欢迎提交Issue和Pull Request来改进这个工具。
+
+## 相关链接
+
+- [MaxMind GeoLite2](https://dev.maxmind.com/geoip/geoip2/geolite2/) - 免费的地理位置数据
+- [GORM](https://gorm.io/) - Go语言的ORM框架
+- [SQLite](https://www.sqlite.org/) - 轻量级数据库
